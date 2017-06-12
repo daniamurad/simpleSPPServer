@@ -8,6 +8,10 @@ public class FreqDomainFilter {
 
 	protected int _cutOffFreq;
 	
+	void func1(int i)
+	{
+		
+	}
 
 	
 }

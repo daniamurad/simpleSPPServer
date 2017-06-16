@@ -7,7 +7,7 @@ public class btAudioPlayer {
 	private MP3Player[] players;
 	int index = 0,count;
 	
-	btAudioPlayer(int count, String AudioName){
+	public btAudioPlayer(int count, String AudioName){
 		assert(count>0);
 		this.count = count;
 		players = new MP3Player[count];

@@ -17,5 +17,7 @@
 	<classpathentry kind="lib" path="C:/Users/Dania Murad/Documents/Setups/jmathplot.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Dania Murad/Documents/Setups/jAudio_2_0_1_pre_release/jAudio_2_0_1_pre_release/jAudio/jAudio.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Dania Murad/Documents/Setups/jaco-mp3-player-0.9.4/lib/jaco-mp3-player-0.9.4.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Dania Murad/Documents/Setups/SpeakerIdentApp.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Dania Murad/Documents/Setups/commons-math3-3.6.1-bin (1)/commons-math3-3.6.1/commons-math3-3.6.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -27,7 +27,9 @@ import org.neuroph.util.TrainingSetImport;
 import org.neuroph.util.TransferFunctionType;
 
 import gesturerecognition.features.Features;
+import gesturerecognition.preprocessing.Preprocessing;
 import gesturerecognition.segmentation.Eucledian;
+import gesturerecognition.segmentation.Segmentation;
 import gesturerecognition.util.ParameterNameConstants;
 import jAudio.org.oc.ocvolume.dsp.fft;
 import jAudio.org.oc.ocvolume.dsp.fft;
@@ -43,6 +45,7 @@ import java.math.*;
 //import org.math.plot.
 import org.math.plot.*;
 import javax.swing.*;
+import org.apache.commons.math3.stat.descriptive.*;
 
 public class ListenThread implements Runnable{
     static btAudioPlayer player1 = new btAudioPlayer(5,"src/kick.mp3");
@@ -60,18 +63,15 @@ public class ListenThread implements Runnable{
 	static double ax = 0;
 	static double ay = 0;
 	static double az = 0;
-	static int N = 5;
+	
 	static int buf = 15;
 	static int N1 = 4;
 	static int idx = 0;
 	static int idxBuf = 0;
 	static int dimensions = 3;
-	static double eucledian = 0;
+	
 	static double[] arrayAcc = new double[dimensions];
-	static double[][] history = new double[N][dimensions];
-	static double[][] historyMean = new double[N][dimensions];
-	static double[] eucledianArr = new double[N];
-	static double[] eucledianMean = new double[N];
+
 	static double[][] buffSegment = new double[buf][dimensions];
 	static boolean flag = false;
 	static String trainFile = "newFeatures.txt";
@@ -97,8 +97,6 @@ public class ListenThread implements Runnable{
 	{
 		trainingSetFileName = "newFeatures.txt";
 		String testingSetFileName = "data.txt";
-        inputsCount = 12;
-        outputsCount = 2;
         
 		
 		// create training set (logical AND function)
@@ -130,7 +128,6 @@ public class ListenThread implements Runnable{
         System.out.println("Training neural network...");
         neuralNet.learn(trainingSet);
         System.out.println("Done!");
-
 	}
 	
 	public void testNN(String testingSetFileName){
@@ -165,7 +162,7 @@ public class ListenThread implements Runnable{
 		//SwingWorkerRealTime swingWorkerRealTime = new SwingWorkerRealTime();
 	    //swingWorkerRealTime.go();
 		//String testingSetFileName = "data.txt";
-        int inputsCount = 12;
+        int inputsCount = 21;
         int outputsCount = 2;
 		BufferedReader br = null;
 		FileReader fr = null;
@@ -180,8 +177,7 @@ public class ListenThread implements Runnable{
 			e1.printStackTrace();
 		}*/
 		
-		trainNN(trainFile,inputsCount, outputsCount);
-		
+		//trainNN("newFeatures.txt",inputsCount,outputsCount);
 		 lasttime = System.currentTimeMillis();
 		 try {
 			 	fr = new FileReader(FILENAME);
@@ -208,190 +204,19 @@ public class ListenThread implements Runnable{
 	    				arrayAcc[2] = Double.parseDouble(numbers[3]);
 	            		
 	            		/** Dania Code Ends**/
-	    				if (idx < N)
-	    				{
-	    					for (int i = 0; i< dimensions; i++)
-	    					{
-	    						history[idx][i] = arrayAcc[i];
-	    					}
-	    					eucledianArr[0] = 0;
-	    					eucledianMean[0] = eucledian;
-	    				//	System.out.println(idx);
-	    					
-	    					if (idx>0)
-	    					{
-	    						eucledian = Eucledian.calculateEucledian(history[idx][0],history[idx][1],history[idx][2],history[idx-1][0],history[idx-1][1],history[idx-1][2]);
-	    						eucledianArr[idx] = eucledian;
-	    						eucledianMean[idx] = eucledian;
-	    					//	System.out.println(eucledian);
-	    					//	System.out.println(eucledianArr[idx]);
-	    					}
-	    				}
-	    				
-	    				else if (idx>N)
-	    				{
-	    					for (int i = 0; i< N-1; i++)
-	    					{
-	    						history[i][0] = history[i+1][0];
-	    						history[i][1] = history[i+1][1];
-	    						history[i][2] = history[i+1][2];
-	    					}
-	    					
-	    					history[N-1][0] = arrayAcc[0];
-	    					history[N-1][1] = arrayAcc[1];
-	    					history[N-1][2] = arrayAcc[2];
-	    					
-	    					historyAvrg();
-	    					eucledian = Eucledian.calculateEucledian(historyMean[N-1][0],historyMean[N-1][1],historyMean[N-1][2],historyMean[N-2][0],historyMean[N-2][1],historyMean[N-2][2]);
-	    					
-	    					for (int i = 0; i< N-1; i++)
-	    					{
-	    						eucledianArr[i] = eucledianArr[i+1];
-	    					}
-	    					
-	    					eucledianArr[N-1] = eucledian;
-	    					
-	    					eucAvrg();
-	    					if (idx>(N+10)){
-	    					if (eucledianMean[N-1]>1.5 && flag == false && idxBuf == 0 && eucledianMean[N-1]-eucledianMean[N-3]>0)
-	    					{
-	    						
-	    						flag = true;
-	    					//	idxBuf++;
-	    						//System.out.println(eucledianMean[N-1]);
-	    					}
-	    					
-	    					if (flag == true) //&& idxBuf<50)
-	    					{
-	    						buffSegment[idxBuf][0] = historyMean[2][0];
-	    						buffSegment[idxBuf][1] = historyMean[2][1];
-	    						buffSegment[idxBuf][2] = historyMean[2][2];
-	    						
-	    						//System.out.println(buffSegment[idxBuf][0]);
-	    						idxBuf++;
-	    						//System.out.println(buffSegment[idxBuf-1][1]);
-	    						
-	    					}
-	    					
-	    					if (idxBuf == buf)
-	    					{
-	    						fw = new FileWriter("data.txt");
-	    		    			
-	    		    			//printSegmentedGes(buffSegment);
-	    					
-	    		    		//	double mag = magnitudeSpectrum(buffSegment[0]);
-	    		    			//System.out.println(mag);
-	    		    			
-	    		    			for (int i = 0; i<ParameterNameConstants.NUMBER_OF_AXIS; i++)
-	    		    			{
-	    		    			//	System.out.println(MAD[i]);
-	    		    				fw.append(Features.MAD(buffSegment)[i] + ",");
-	    		    			//	System.out.println(RMS[i]);
-	    		    				fw.append(Features.RMS(buffSegment)[i] + ",");
-	    		    			//	System.out.println(STD[i]);
-	    		    				fw.append(Features.STD(buffSegment)[i] + ",");
-	    		    			//	System.out.println(RSS[i]);
-	    		    				fw.append(Features.RSS(buffSegment)[i] + ",");
-	    		    			}
-	    		    			
-	    		    			fw.append(0 + "," + 1);
-	    		    			
-	    		    			//fw.append(RSS[0] + "," + RSS[1] + "," + RSS[2]);
-	    		    			fw.close();
-	    		    			
-	    		    			//plot();
-	    		    			
-	    		    			//trainNN(trainFile,inputsCount,outputsCount);
-	    		    			testNN(testFile);
-	    		    		//	player.play();
-	    		    			System.out.println("break");
-	    						flag = false;
-	    						idxBuf = 0;
-	    					}
-	    					}
-	    				
-	    				}
-	    				
+
+	    				Preprocessing.preprocess(idx,arrayAcc);
+	    				Segmentation.segment(idx, Preprocessing.getEucledianAverage(), Preprocessing.getHistoryAverage() , testFile);
+
 	    				idx++;
-	    			
-	            		
-	         /*** MATTS CODE ***/   
 	    				
-	         /*   		double x = Double.parseDouble(numbers[1]);
-	            		double y = Double.parseDouble(numbers[2]);
-	            		double z = Double.parseDouble(numbers[3]);
-	            		
-	          			double eudist =  Math.pow((x-lastx),2)+Math.pow((y-lasty),2)+Math.pow((z-lastz),2);
-	            		if(eudist>140){
-	            			long time = System.currentTimeMillis();
-	            			if ((time-lasttime)>220){
-		            			if( FLAG == 0){
-		            			    FLAG = 1;
-		            			    player.play();
-		            			    lasttime = time;
-		            			}
-	            		    }
-	            		}
-	            		else{
-	            			FLAG =0;
-	            		}
-	            		lastx = x;
-	            		lasty = y;
-	            		lastz = z;
-	            		//swingWorkerRealTime.update(x, y, z);
-	            	    System.out.println(lineRead);*/
+	    			
+	         
 	            	}
 	            }
 	        } catch (Exception e) {
 	            e.printStackTrace();
 	        }
-	}
-	
-	
-
-
-	
-
-	public static void historyAvrg()
-	{
-		double sumx = 0;
-		double sumy = 0;
-		double sumz = 0;
-		
-		for (int i = 0; i< N-1; i++)
-		{
-			historyMean[i][0] = historyMean[i+1][0];
-			historyMean[i][1] = historyMean[i+1][1];
-			historyMean[i][2] = historyMean[i+1][2];
-		}
-		
-		for (int i = 0; i< N; i++)
-		{
-			sumx = sumx + history[i][0];
-			sumy = sumy + history[i][1];
-			sumz = sumz + history[i][2];
-		}
-		
-		historyMean[N-1][0] = sumx/N;
-		historyMean[N-1][1] = sumy/N;
-		historyMean[N-1][2] = sumz/N;
-	}
-
-	public static void eucAvrg()
-	{
-		double sum = 0;
-		
-		for (int i = 0; i< N-1; i++)
-		{
-			eucledianMean[i] = eucledianMean[i+1];
-		}
-		
-		for (int i = 0; i< N; i++)
-		{
-			sum = sum + eucledianArr[i];
-		}
-		
-		eucledianMean[N-1] = sum/N;
 	}
 	
 	public static void printSegmentedGes (double[][] arr)
@@ -474,15 +299,6 @@ public ListenThread( String file_path , boolean append_value ) {
         frame.setVisible(true);
 	}
 	
-	public static void DTWW()
-	{
-		
-		double[] n2 = {1.5f, 3.9f, 4.1f, 3.3f};
-		double[] n1 = {2.1f, 2.45f, 3.673f, 4.32f, 2.05f, 1.93f, 5.67f, 6.01f};
-		DTW dtw = new DTW(n1, n2);
-		System.out.println(dtw);
-		//DTW dtw = new DTW(sample, templete)
-	}
 }
 
 
